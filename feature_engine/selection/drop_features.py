@@ -55,7 +55,7 @@ class DropFeatures(BaseSelector):
 
     def __init__(self, features_to_drop: List[Union[str, int]]):
 
-        if not isinstance(features_to_drop, (str, list)) or len(features_to_drop) == 0:
+        if not isinstance(features_to_drop, (str, list)):
             raise ValueError(
                 f"features_to_drop should be a list with the name of the variables "
                 f"you wish to drop from the dataframe. Got {features_to_drop} instead."
