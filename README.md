@@ -1,3 +1,5 @@
+# The difference with the original Feature Engine is that this Fork allows for empty list value for `variables`, which can be helpful for GridSearching
+
 # Feature Engine
 
 ![PythonVersion](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-success)
