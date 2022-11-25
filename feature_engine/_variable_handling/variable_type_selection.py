@@ -3,15 +3,14 @@
 from typing import List, Tuple, Union
 
 import pandas as pd
-from pandas.api.types import is_categorical_dtype as is_categorical
-from pandas.api.types import is_datetime64_any_dtype as is_datetime
-from pandas.api.types import is_numeric_dtype as is_numeric
-from pandas.api.types import is_object_dtype as is_object
-
 from feature_engine._variable_handling.variable_type_checks import (
     _is_categorical_and_is_datetime,
     _is_categorical_and_is_not_datetime,
 )
+from pandas.api.types import is_categorical_dtype as is_categorical
+from pandas.api.types import is_datetime64_any_dtype as is_datetime
+from pandas.api.types import is_numeric_dtype as is_numeric
+from pandas.api.types import is_object_dtype as is_object
 
 Variables = Union[None, int, str, List[Union[str, int]]]
 
@@ -55,17 +54,12 @@ def _find_or_check_numerical_variables(
         else:
             raise TypeError("The variable entered is not numeric.")
 
-    else:
-        if len(variables) == 0:
-            raise ValueError("The list of variables is empty.")
-
-        # check that user entered variables are of type numerical
-        else:
-            if len(X[variables].select_dtypes(exclude="number").columns) > 0:
-                raise TypeError(
-                    "Some of the variables are not numerical. Please cast them as "
-                    "numerical before using this transformer."
-                )
+    # check that user entered variables are of type numerical
+    elif len(X[variables].select_dtypes(exclude="number").columns) > 0:
+        raise TypeError(
+            "Some of the variables are not numerical. Please cast them as "
+            "numerical before using this transformer."
+        )
 
     return variables
 
@@ -113,17 +107,14 @@ def _find_or_check_categorical_variables(
         else:
             raise TypeError("The variable entered is not categorical.")
 
-    else:
-        if len(variables) == 0:
-            raise ValueError("The list of variables is empty.")
-
-        # check that user entered variables are of type categorical
-        else:
-            if len(X[variables].select_dtypes(exclude=["O", "category"]).columns) > 0:
-                raise TypeError(
-                    "Some of the variables are not categorical. Please cast them as "
-                    "categorical or object before using this transformer."
-                )
+    # check that user entered variables are of type categorical
+    elif (
+        len(X[variables].select_dtypes(exclude=["O", "category"]).columns) > 0
+    ):
+        raise TypeError(
+            "Some of the variables are not categorical. Please cast them as "
+            "categorical or object before using this transformer."
+        )
 
     return variables
 
@@ -149,7 +140,8 @@ def _find_or_check_datetime_variables(
         variables = [
             column
             for column in X.select_dtypes(exclude="number").columns
-            if is_datetime(X[column]) or _is_categorical_and_is_datetime(X[column])
+            if is_datetime(X[column])
+            or _is_categorical_and_is_datetime(X[column])
         ]
 
         if len(variables) == 0:
@@ -166,20 +158,15 @@ def _find_or_check_datetime_variables(
             raise TypeError("The variable entered is not datetime.")
 
     else:
-        if len(variables) == 0:
-            raise ValueError("The indicated list of variables is empty.")
+        vars_non_dt = [
+            column
+            for column in X[variables].select_dtypes(exclude="datetime")
+            if is_numeric(X[column])
+            or not _is_categorical_and_is_datetime(X[column])
+        ]
 
-        # check that the variables entered by the user are datetime
-        else:
-            vars_non_dt = [
-                column
-                for column in X[variables].select_dtypes(exclude="datetime")
-                if is_numeric(X[column])
-                or not _is_categorical_and_is_datetime(X[column])
-            ]
-
-            if len(vars_non_dt) > 0:
-                raise TypeError("Some of the variables are not datetime.")
+        if len(vars_non_dt) > 0:
+            raise TypeError("Some of the variables are not datetime.")
 
     return variables
 
@@ -221,12 +208,8 @@ def _find_all_variables(
         variables_ = [variables]
 
     else:
-        if len(variables) == 0:
-            raise ValueError("The list of variables is empty.")
-
         if any(f for f in variables if f not in X.columns):
             raise KeyError("Some of the variables are not in the dataframe.")
-
         variables_ = variables
 
     return variables_
@@ -310,7 +293,9 @@ def _find_categorical_and_numerical_variables(
         if variables is None:
             variables_cat = [
                 column
-                for column in X.select_dtypes(include=["O", "category"]).columns
+                for column in X.select_dtypes(
+                    include=["O", "category"]
+                ).columns
                 if _is_categorical_and_is_not_datetime(X[column])
             ]
         # find numerical variables in dataset
@@ -323,18 +308,22 @@ def _find_categorical_and_numerical_variables(
 
     # If user passes variable list.
     else:
-        if len(variables) == 0:
-            raise ValueError("The list of variables is empty.")
-
         # find categorical variables
         variables_cat = [
-            var for var in X[variables].select_dtypes(include=["O", "category"]).columns
+            var
+            for var in X[variables]
+            .select_dtypes(include=["O", "category"])
+            .columns
         ]
 
         # find numerical variables
-        variables_num = list(X[variables].select_dtypes(include="number").columns)
+        variables_num = list(
+            X[variables].select_dtypes(include="number").columns
+        )
 
-        if any([v for v in variables if v not in variables_cat + variables_num]):
+        if any(
+            [v for v in variables if v not in variables_cat + variables_num]
+        ):
             raise TypeError(
                 "Some of the variables are neither numerical nor categorical."
             )

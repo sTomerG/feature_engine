@@ -1,22 +1,31 @@
 import numpy as np
 import pandas as pd
 import pytest
-from sklearn.base import clone
-from sklearn.exceptions import NotFittedError
-from sklearn.utils.estimator_checks import check_estimator
-
 from feature_engine._prediction.base_predictor import BaseTargetMeanEstimator
-from feature_engine._prediction.target_mean_classifier import TargetMeanClassifier
-from feature_engine._prediction.target_mean_regressor import TargetMeanRegressor
+from feature_engine._prediction.target_mean_classifier import (
+    TargetMeanClassifier,
+)
+from feature_engine._prediction.target_mean_regressor import (
+    TargetMeanRegressor,
+)
 from feature_engine.discretisation import (
     EqualFrequencyDiscretiser,
     EqualWidthDiscretiser,
 )
 from feature_engine.encoding import MeanEncoder
+from sklearn.base import clone
+from sklearn.exceptions import NotFittedError
+from sklearn.utils.estimator_checks import check_estimator
 from tests.estimator_checks.dataframe_for_checks import test_df
-from tests.estimator_checks.fit_functionality_checks import check_error_if_y_not_passed
+from tests.estimator_checks.fit_functionality_checks import (
+    check_error_if_y_not_passed,
+)
 
-_estimators = [BaseTargetMeanEstimator(), TargetMeanClassifier(), TargetMeanRegressor()]
+_estimators = [
+    BaseTargetMeanEstimator(),
+    TargetMeanClassifier(),
+    TargetMeanRegressor(),
+]
 _predictors = [TargetMeanRegressor(), TargetMeanClassifier()]
 
 
@@ -153,15 +162,33 @@ def test_variable_selection(estimator):
     transformer.set_params(
         variables=["var_1", "var_2", "cat_var1", "cat_var2", "date1"]
     )
-    assert transformer.variables == ["var_1", "var_2", "cat_var1", "cat_var2", "date1"]
+    assert transformer.variables == [
+        "var_1",
+        "var_2",
+        "cat_var1",
+        "cat_var2",
+        "date1",
+    ]
 
     transformer.fit(X, y)
-    assert transformer.variables == ["var_1", "var_2", "cat_var1", "cat_var2", "date1"]
-    assert transformer.variables_categorical_ == ["cat_var1", "cat_var2", "date1"]
+    assert transformer.variables == [
+        "var_1",
+        "var_2",
+        "cat_var1",
+        "cat_var2",
+        "date1",
+    ]
+    assert transformer.variables_categorical_ == [
+        "cat_var1",
+        "cat_var2",
+        "date1",
+    ]
     assert transformer.variables_numerical_ == ["var_1", "var_2"]
 
     # Case 6: automatically select variables
-    X_c = X[["var_1", "var_2", "cat_var1", "cat_var2", "date1", "date2"]].copy()
+    X_c = X[
+        ["var_1", "var_2", "cat_var1", "cat_var2", "date1", "date2"]
+    ].copy()
 
     transformer.set_params(variables=None)
     assert transformer.variables is None
@@ -177,8 +204,7 @@ def test_variable_selection(estimator):
 
     # Case 6: user passes empty list
     transformer.set_params(variables=[])
-    with pytest.raises(ValueError):
-        transformer.fit(X, y)
+    assert transformer.fit(X, y)
 
 
 @pytest.mark.parametrize("estimator", _estimators)
@@ -228,9 +254,13 @@ def test_attributes_upon_fitting(_strategy, _bins, estimator):
             == EqualFrequencyDiscretiser
         )
 
-    assert type(transformer._pipeline.named_steps["encoder_num"]) == MeanEncoder
+    assert (
+        type(transformer._pipeline.named_steps["encoder_num"]) == MeanEncoder
+    )
 
-    assert type(transformer._pipeline.named_steps["encoder_cat"]) == MeanEncoder
+    assert (
+        type(transformer._pipeline.named_steps["encoder_cat"]) == MeanEncoder
+    )
 
 
 @pytest.mark.parametrize("estimator", _estimators)
